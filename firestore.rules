@@ -48,6 +48,12 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, write: if isAdmin();
       allow read: if isOwner(userId);
+      // First-login self-provisioning: an authenticated user may create ONLY
+      // their own profile document. The app assigns the role from its directory
+      // (seed data); any later role/status change requires an existing admin.
+      // Without this, first login fails: isAdmin() needs the doc to exist,
+      // but creating the doc needs isAdmin() — a chicken-and-egg deadlock.
+      allow create: if isOwner(userId);
     }
 
     // --- 2. PROJECTS COLLECTION ---
