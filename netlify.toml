@@ -13,10 +13,12 @@
   node_bundler = "esbuild"
   external_node_modules = ["@google/genai"]
 
-# Route the app's API calls to the Netlify Function (mirrors server.ts)
+# Route the app's chatbot API call to the Netlify Function (mirrors server.ts).
+# Exact-path mapping: the frontend calls POST /api/gemini/chat and the
+# deployed function is named "gemini-chat".
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  from = "/api/gemini/chat"
+  to = "/.netlify/functions/gemini-chat"
   status = 200
 
 # SPA fallback — serve index.html for all frontend routes
