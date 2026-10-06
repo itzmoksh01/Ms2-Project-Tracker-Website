@@ -1,0 +1,94 @@
+{
+  "projectId": "geometric-binder-djhcx",
+  "entities": {
+    "users": {
+      "uid": "string (Firebase Auth User ID)",
+      "fullName": "string",
+      "email": "string",
+      "username": "string",
+      "employeeId": "string",
+      "role": "'admin' | 'employee'",
+      "status": "'active' | 'suspended'",
+      "designation": "string",
+      "department": "string",
+      "createdAt": "ISODateTime",
+      "updatedAt": "ISODateTime"
+    },
+    "projects": {
+      "projectId": "string",
+      "projectCode": "string",
+      "projectName": "string",
+      "clientName": "string",
+      "description": "string",
+      "startDate": "string",
+      "deadline": "string",
+      "priority": "'Low' | 'Medium' | 'High' | 'Critical'",
+      "status": "'Active' | 'Complete' | 'Suspended'",
+      "currentStage": "'Early Stage' | 'In Progress' | 'Final Stage' | 'Complete'",
+      "currentCompletionPercent": "number",
+      "expectedProgressPercent": "number",
+      "healthStatus": "'Excellent' | 'On Track' | 'Slight Delay' | 'High Risk' | 'Critical'",
+      "assignedEmployeeIds": "string[]",
+      "createdBy": "string",
+      "createdAt": "ISODateTime",
+      "updatedAt": "ISODateTime"
+    },
+    "assignments": {
+      "assignmentId": "string",
+      "projectId": "string",
+      "employeeUid": "string",
+      "role": "string",
+      "assignedAt": "ISODateTime"
+    },
+    "dailyProgress": {
+      "progressId": "string",
+      "date": "string",
+      "employeeUid": "string",
+      "employeeName": "string",
+      "projectId": "string",
+      "projectName": "string",
+      "workDescription": "string",
+      "hoursSpent": "number",
+      "flaggedAttention": "boolean",
+      "flagReason": "string",
+      "mediaRef": "string",
+      "isLocked": "boolean",
+      "createdAt": "ISODateTime"
+    },
+    "activityLogs": {
+      "logId": "string",
+      "userUid": "string",
+      "authorName": "string",
+      "actionDescription": "string",
+      "scope": "'project' | 'attendance' | 'auth' | 'system'",
+      "targetRefId": "string",
+      "timestamp": "ISODateTime"
+    },
+    "notifications": {
+      "notificationId": "string",
+      "userId": "string | 'all'",
+      "title": "string",
+      "message": "string",
+      "type": "'info' | 'success' | 'warning' | 'error'",
+      "timestamp": "ISODateTime",
+      "isRead": "boolean"
+    },
+    "adminPrivateNotes": {
+      "noteId": "string",
+      "targetType": "'project' | 'employee'",
+      "targetRefId": "string",
+      "noteText": "string",
+      "sentiment": "string",
+      "updatedAt": "ISODateTime"
+    }
+  },
+  "firestore": {
+    "users": "/users/{userId}",
+    "projects": "/projects/{projectId}",
+    "assignments": "/assignments/{assignmentId}",
+    "dailyProgress": "/dailyProgress/{progressId}",
+    "activityLogs": "/activityLogs/{logId}",
+    "notifications": "/notifications/{notificationId}",
+    "adminPrivateNotes": "/adminPrivateNotes/{noteId}"
+  }
+}

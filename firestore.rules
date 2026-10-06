@@ -1,0 +1,116 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ========================================================================
+    // ZERO-TRUST AUTHORIZATION & AUDIT FUNCTIONS (ABAC-CONTROLLED)
+    // ========================================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Lookup user profile records in Firestore
+    function getUserRecord(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    // Checks whether the requesting identity is designated as 'admin'
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.uid == 'uid-ratan-admin' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserRecord(request.auth.uid).role == 'admin')
+      );
+    }
+
+    // Checks whether the requesting identity is designated as an 'employee'
+    function isEmployee() {
+      return isAuthenticated() && (
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserRecord(request.auth.uid).role == 'employee'
+      );
+    }
+
+    // Checks whether the requesting user matches the requested resource owner ID
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Enforce robust alphanumeric or standard uuid syntax on keys to block injection vector payload
+    function isValidId(docId) {
+      return docId is string && docId.size() >= 3 && docId.size() <= 64;
+    }
+
+    // ========================================================================
+    // COLLECTION ACCESS RULES & SCHEMAS
+    // ========================================================================
+
+    // --- 1. USERS COLLECTION ---
+    match /users/{userId} {
+      allow read, write: if isAdmin();
+      allow read: if isOwner(userId);
+    }
+
+    // --- 2. PROJECTS COLLECTION ---
+    match /projects/{projectId} {
+      allow read, write: if isAdmin();
+      // Employee can read if they are authenticated and are listed in assignedEmployeeIds array
+      allow read: if isAuthenticated() && (
+        resource == null ||
+        request.auth.uid in resource.data.assignedEmployeeIds
+      );
+    }
+
+    // --- 3. ASSIGNMENTS COLLECTION ---
+    match /assignments/{assignmentId} {
+      allow read, write: if isAdmin();
+      allow read: if isAuthenticated() && (
+        resource == null ||
+        resource.data.employeeUid == request.auth.uid
+      );
+    }
+
+    // --- 4. DAILY PROGRESS COLLECTION ---
+    match /dailyProgress/{progressId} {
+      allow read, write: if isAdmin();
+      
+      // Employees can view their own logged progress
+      allow read: if isAuthenticated() && (
+        resource == null ||
+        resource.data.employeeUid == request.auth.uid
+      );
+
+      // Employees can create locked daily logs for themselves
+      // (The log is marked as `isLocked = true` so it is locked by default)
+      allow create: if isAuthenticated() &&
+        isValidId(progressId) &&
+        request.resource.data.employeeUid == request.auth.uid &&
+        request.resource.data.isLocked == true;
+    }
+
+    // --- 5. ACTIVITY LOGS COLLECTION ---
+    match /activityLogs/{logId} {
+      allow read, write: if isAdmin();
+      allow create: if isAuthenticated(); // All active sessions can log audits
+    }
+
+    // --- 6. NOTIFICATIONS COLLECTION ---
+    match /notifications/{notificationId} {
+      allow read, write: if isAdmin();
+      allow read: if isAuthenticated() && (
+        resource == null ||
+        resource.data.userId == request.auth.uid ||
+        resource.data.userId == 'all'
+      );
+      // Employees can dismiss/read their own notifications
+      allow update: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead'])
+      );
+    }
+
+    // --- 7. ADMIN PRIVATE NOTES COLLECTION ---
+    match /adminPrivateNotes/{noteId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

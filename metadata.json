@@ -1,0 +1,6 @@
+{
+  "name": "MS2 Project Tracker",
+  "description": "Premium cinematic project management command center for MS2 entertainment and production studios.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
