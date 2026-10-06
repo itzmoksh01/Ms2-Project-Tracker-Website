@@ -939,8 +939,17 @@ class StorageManager {
         // If user not found in Firebase Auth, but exists in our local directory, let's auto-create them in Firebase Auth!
         if (authErr.code === 'auth/user-not-found' || authErr.code === 'auth/invalid-credential') {
           if (matchedUser || lowerInput === 'ratan') {
-            userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            console.info(`Auto-provisioned Firebase Auth user for ${email}`);
+            try {
+              userCredential = await createUserWithEmailAndPassword(auth, email, password);
+              console.info(`Auto-provisioned Firebase Auth user for ${email}`);
+            } catch (createErr: any) {
+              // With Firebase email enumeration protection, a wrong password surfaces as
+              // invalid-credential, so we land here when the account already exists.
+              if (createErr.code === 'auth/email-already-in-use') {
+                return { success: false, error: 'Incorrect password. Please try again or use Forgot Password.' };
+              }
+              throw createErr;
+            }
           } else {
             throw authErr;
           }
